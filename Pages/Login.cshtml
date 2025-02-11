@@ -1,0 +1,124 @@
+﻿@page
+@model _233531N_Ace_Job_Agency.Pages.LoginModel
+@{
+	ViewData["Title"] = "Login";
+}
+<div class="container mt-5">
+
+	<div class="row justify-content-center align-items-center">
+
+		<div class="col-sm-12 col-md-12 col-lg-4">
+			<h1 class="mb-3">Login </h1>
+
+			<form method="post" id="login-form" asp-antiforgery="true" onsubmit="return validateForm()">
+				<div asp-validation-summary="All" class="text-danger"></div>
+				@if (TempData["Message"] != null)
+				{
+					<div class="alert alert-warning">
+						@TempData["Message"]
+					</div>
+				}
+
+				<div class="mb-3">
+					<label class="form-label" asp-for="LModel.Email">Email Address</label>
+					<input type="Text" asp-for="LModel.Email" class="form-control" />
+					<span asp-validaton-for="LModel.Email" class="text-danger" id="email-error"></span>
+				</div>
+
+				<div class="mb-3">
+					<label class="form-label" asp-for="LModel.Password">Password</label>
+					<div style="display: flex; align-items: center;">
+						<div style="flex-grow: 1;">
+							<input type="password" asp-for="LModel.Password" class="form-control" id="password-input" />
+						</div>
+						<div>
+							<button type="button" class="btn btn-outline-secondary" id="toggle-password" onclick="togglePassword()">Show</button>
+						</div>
+					</div>
+					<span asp-validation-for="LModel.Password" class="text-danger"></span>
+				</div>
+
+				<div class="mb-3 form-check">
+					<input type="checkbox" asp-for="LModel.RememberMe" class="form-check-input" />
+					<label class="form-check-label" asp-for="LModel.RememberMe">Remember Me?</label>
+				</div>
+
+				<!-- Hidden input for reCAPTCHA -->
+				<input type="hidden" id="recaptchaResponse" name="RecaptchaResponse" />
+
+				<div class="mb-3">
+					<button type="submit" class="btn btn-primary" id="login-button" >Login</button>
+				</div>
+			</form>
+
+			<!-- Load Google reCAPTCHA v3 -->
+			<script src="https://www.google.com/recaptcha/api.js?render=6LexpdAqAAAAAOZyCGOzrGGGtzQQYfZ6BFW6h8Kk"></script>
+			<script>
+				// Email validation pattern
+				const emailPattern = /^[a-zA-Z0-9._-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+
+				const emailInput = document.getElementById('LModel_Email');
+				const emailError = document.getElementById('email-error');
+				const loginButton = document.getElementById('login-button');
+				const passwordInput = document.getElementById('LModel_Password');
+
+				emailInput.addEventListener('input', function () {
+					const emailValue = this.value;
+
+					// Check if email is valid
+					if (!emailPattern.test(emailValue)) {
+						emailError.textContent = 'Invalid email address.';
+					} else {
+						emailError.textContent = ''; // Clear error message if valid
+					}
+				});
+
+				document.getElementById("login-button").addEventListener("click", function (event) {
+					event.preventDefault(); // Prevent form submission
+
+					grecaptcha.ready(function () {
+						grecaptcha.execute("6LexpdAqAAAAAOZyCGOzrGGGtzQQYfZ6BFW6h8Kk", { action: "login" }).then(function (token) {
+							document.getElementById("recaptchaResponse").value = token;
+							document.getElementById("login-form").submit();
+						});
+					});
+				});
+
+                // Client-side validation
+				function validateForm() {
+					const email = document.getElementById('LModel_Email').value;
+					const password = document.getElementById('LModel_Password').value;
+
+					// Email validation
+					const emailPattern = /^[a-zA-Z0-9._-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+					if (!emailPattern.test(email)) {
+						alert("Please enter a valid email address.");
+						return false;
+					}
+
+					// Password validation (example: minimum 8 characters)
+					if (password.length < 8) {
+						alert("Password must be at least 8 characters.");
+						return false;
+					}
+
+					return true;
+				}
+
+				// Function to toggle the password visibility
+				function togglePassword() {
+					const passwordInput = document.getElementById('password-input');
+					const toggleButton = document.getElementById('toggle-password');
+
+					if (passwordInput.type === "password") {
+						passwordInput.type = "text"; // Show password
+						toggleButton.textContent = "Hide"; // Change button text to 'Hide'
+					} else {
+						passwordInput.type = "password"; // Hide password
+						toggleButton.textContent = "Show"; // Change button text to 'Show'
+					}
+				}
+			</script>
+		</div>
+	</div>
+</div>

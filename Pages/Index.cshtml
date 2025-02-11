@@ -1,0 +1,32 @@
+﻿@page
+@model IndexModel
+@using System.IO
+
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="text-center">
+    
+    <h1 class="display-4">Welcome, @Model.CurrentUser.FirstName @Model.CurrentUser.LastName</h1>
+
+    <p><strong>Email:</strong> @Model.CurrentUser.Email</p>
+    <p><strong>First Name:</strong> @Model.CurrentUser.FirstName</p>
+    <p><strong>Last Name:</strong> @Model.CurrentUser.LastName</p>
+    <p><strong>Gender:</strong> @Model.CurrentUser.Gender</p>
+    <p><strong>Date of Birth:</strong> @Model.CurrentUser.DateOfBirth.ToShortDateString()</p>
+    <p><strong>NRIC:</strong> @Model.CurrentUser.NRIC</p>
+    @if (!string.IsNullOrEmpty(Model.CurrentUser.ResumePath))
+    {
+            <p><strong>Resume:</strong> 
+                <a href="@Url.Content(Model.CurrentUser.ResumePath)" download>Download Resume</a>
+            </p>
+    }
+    else
+    {
+            <p>No resume uploaded.</p>
+    }
+
+    <!-- Optionally, you could display the 'WhoAmI' text or other user data -->
+    <p><strong>About You:</strong> @Html.Raw(Model.CurrentUser.WhoAmI)</p>
+</div>

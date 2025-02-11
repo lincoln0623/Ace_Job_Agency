@@ -1,0 +1,260 @@
+﻿@page
+@model _233531N_Ace_Job_Agency.Pages.RegisterModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center align-items-center">
+        <div class="col-sm-12 col-md-12 col-lg-6">
+            <h1 class="mb-3">Membership Registration</h1>
+
+            <form method="post" id="register-form" enctype="multipart/form-data" asp-antiforgery="true" onsubmit="handleFormSubmission(event)">
+                <div asp-validation-summary="All" class="text-danger"></div>
+
+                <div class="mb-3">
+                    <label class="form-label" asp-for="RModel.FirstName">First Name</label>
+                    <input type="text" asp-for="RModel.FirstName" class="form-control" required />
+                    <span asp-validation-for="RModel.FirstName" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" asp-for="RModel.LastName">Last Name</label>
+                    <input type="text" asp-for="RModel.LastName" class="form-control" required />
+                    <span asp-validation-for="RModel.LastName" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" asp-for="RModel.Gender">Gender</label>
+                    <select asp-for="RModel.Gender" class="form-control" required >
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <span asp-validation-for="RModel.Gender" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" asp-for="RModel.NRIC">NRIC</label>
+                    <input type="text" asp-for="RModel.NRIC" class="form-control" id="NRIC" required />
+                    <span asp-validation-for="RModel.NRIC" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" asp-for="RModel.Email">Email Address</label>
+                    <input type="email" asp-for="RModel.Email" class="form-control" required />
+                    <span asp-validation-for="RModel.Email" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" asp-for="RModel.Password">Password</label>
+                    <div style="display: flex; align-items: center;">
+                        <div style="flex-grow: 1;">
+                            <input type="password" asp-for="RModel.Password" class="form-control" id="passwordInput" onkeyup="checkPasswordStrength()" required />
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-outline-secondary" id="passwordToggle" onclick="togglePasswordVisibility('passwordInput', 'passwordToggle')">Show</button>
+                        </div>
+                    </div>
+                    <span asp-validation-for="RModel.Password" class="text-danger"></span>
+                    <small id="passwordStrength" class="form-text"></small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" asp-for="RModel.ConfirmPassword">Confirm Password</label>
+                    <div style="display: flex; align-items: center;">
+                        <div style="flex-grow: 1;">
+                            <input type="password" asp-for="RModel.ConfirmPassword" class="form-control" id="confirmPasswordInput" onkeyup="checkPasswordMatch()" required />
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-outline-secondary" id="confirmPasswordToggle" onclick="togglePasswordVisibility('confirmPasswordInput', 'confirmPasswordToggle')">Show</button>
+                        </div>
+                    </div>
+                    <span asp-validation-for="RModel.ConfirmPassword" class="text-danger"></span>
+                    <small id="passwordMatchMessage" class="form-text"></small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" asp-for="RModel.DateOfBirth">Date of Birth</label>
+                    <input type="date" asp-for="RModel.DateOfBirth" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                    <span asp-validation-for="RModel.DateOfBirth" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" asp-for="RModel.Resume">Upload Resume (.pdf or .docx)</label>
+                    <input type="file" asp-for="RModel.Resume" class="form-control" accept=".pdf,.docx" onchange="setResumePath(this)" required />
+                    <span asp-validation-for="RModel.Resume" class="text-danger"></span>
+                </div>
+
+                <input type="hidden" asp-for="RModel.ResumePath" class="form-control" id="resumePathInput" value="Default" />
+
+                <div class="mb-3">
+                    <label class="form-label" asp-for="RModel.WhoAmI">Who Am I</label>
+                    <textarea asp-for="RModel.WhoAmI" class="form-control" id="whoAmI" required></textarea>
+                    <span asp-validation-for="RModel.WhoAmI" class="text-danger"></span>
+                </div>
+
+                <!-- Hidden input for reCAPTCHA -->
+                <input type="hidden" id="recaptchaResponse" name="RecaptchaResponse" />
+
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-primary">Register</button>
+                </div>
+            </form>
+
+            <!-- Load Google reCAPTCHA v3 -->
+            <script src="https://www.google.com/recaptcha/api.js?render=6LexpdAqAAAAAOZyCGOzrGGGtzQQYfZ6BFW6h8Kk"></script>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.4/dist/purify.min.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("register-form");
+        const inputs = form.querySelectorAll("input, select, textarea");
+        const passwordInput = document.getElementById("passwordInput");
+
+        inputs.forEach(input => {
+            input.addEventListener("input", () => validateField(input));
+        });
+
+        passwordInput.addEventListener("keyup", checkPasswordStrength);
+
+        form.addEventListener("submit", function (event) {
+            let isValid = true;
+
+            if (!isValid) {
+                event.preventDefault(); // Prevent form submission if invalid
+            } else {
+                event.preventDefault(); // Prevent default form submission
+                grecaptcha.ready(function () {
+                    grecaptcha.execute("6LexpdAqAAAAAOZyCGOzrGGGtzQQYfZ6BFW6h8Kk", { action: "submit" }).then(function (token) {
+                        document.getElementById("recaptchaResponse").value = token;
+                        form.submit();
+                    });
+                });
+            }
+        });
+    });
+
+    function togglePasswordVisibility(inputId, buttonId) {
+        var inputField = document.getElementById(inputId);
+        var button = document.getElementById(buttonId);
+
+        if (inputField.type === "password") {
+            inputField.type = "text";
+            button.innerText = "Hide";
+        } else {
+            inputField.type = "password";
+            button.innerText = "Show"; 
+        }
+    }
+
+    function checkPasswordMatch() {
+        var password = document.getElementById("passwordInput").value;
+        var confirmPassword = document.getElementById("confirmPasswordInput").value;
+        var message = document.getElementById("passwordMatchMessage");
+
+        if (confirmPassword === "") {
+            message.textContent = "";
+            message.style.color = "";
+        } else if (password === confirmPassword) {
+            message.textContent = "Passwords match";
+            message.style.color = "green";
+        } else {
+            message.textContent = "Passwords do not match";
+            message.style.color = "red";
+        }
+    }
+
+    function validateField(input) {
+        const errorSpan = input.nextElementSibling;
+        let isValid = true;
+
+        // Trim whitespace
+        const inputValue = input.value.trim();
+
+        if (input.hasAttribute("required") && !input.value) {
+            errorSpan.textContent = "This field is required.";
+            isValid = false;
+        } else if (input.id === "NRIC" && !isValidNRIC(inputValue)) { 
+            errorSpan.textContent = "Invalid NRIC format.";
+            isValid = false;
+        } else if (input.type === "email" && !validateEmail(input.value)) {
+            errorSpan.textContent = "Invalid email format.";
+            isValid = false;
+        } else if (input.id === "passwordInput") {
+            checkPasswordStrength(); 
+            errorSpan.textContent = ""; 
+        } else if (input.id === "confirmPasswordInput") {
+            checkPasswordMatch();
+            errorSpan.textContent = "";
+        } else if (input.type === "file" && !validateFile(input)) {
+            errorSpan.textContent = "Allowed formats: .pdf, .docx";
+            isValid = false;
+        } else {
+            errorSpan.textContent = "";
+        }
+
+        input.style.borderColor = isValid ? "green" : "red"; 
+        return isValid;
+    }
+
+    function isValidNRIC(nric) {
+        const regex = /^[STFG][0-9]{7}[A-Z]$|^[EGSF][0-9]{7}[A-Z]$/;
+        return regex.test(nric);
+    }
+
+    function validateEmail(email) {
+        const regex = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return regex.test(email);
+    }
+
+    function validateFile(input) {
+        const allowedExtensions = ["pdf", "docx"];
+        const fileExtension = input.value.split(".").pop().toLowerCase();
+        return allowedExtensions.includes(fileExtension);
+    }
+
+    function setResumePath(input) {
+
+        if (input.files && input.files.length > 0) {
+            var fileName = input.files[0].name; 
+            document.getElementById("resumePathInput").value = fileName; 
+        } else {
+            console.log("No file selected.");
+        }
+    }
+
+    function checkPasswordStrength() {
+        var password = document.getElementById("passwordInput").value;
+        var strengthText = document.getElementById("passwordStrength");
+
+        var strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@@$!%*?&])[A-Za-z\d@@$!%*?&]{12,}$/;
+        var mediumRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@@$!%*?&]{8,}$/;
+        var weakRegex = /^(?=.*[a-z])[A-Za-z\d@@$!%*?&]{6,}$/;
+
+        if (password === "" ) {
+            strengthText.textContent = "";
+            strengthText.style.color = "";
+        } else if (strongRegex.test(password)) {
+            strengthText.textContent = "Strong Password";
+            strengthText.style.color = "green";
+        } else if (mediumRegex.test(password)) {
+            strengthText.textContent = "Medium Password (Add special characters & make it 12+ characters)";
+            strengthText.style.color = "orange";
+        } else if (weakRegex.test(password)) {
+            strengthText.textContent = "Weak Password (Add uppercase, numbers & special characters)";
+            strengthText.style.color = "red";
+        } else {
+            strengthText.textContent = "Very Weak (Use a stronger password)";
+            strengthText.style.color = "darkred";
+        }
+    }
+    </script>
+}
